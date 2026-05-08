@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nimbus"
+version = "0.1.0"
+description = "Smooth animated data transitions for HoloViews / Panel"
+requires-python = ">=3.12"
+dependencies = [
+    "bokeh>=3.9.0",
+    "holoviews>=1.22.1",
+    "numpy>=2.4.4",
+    "panel>=1.8.10",
+    "param>=2.3.3",
+]
+
+[dependency-groups]
+tools = [
+    "ruff>=0.15.12",
+    "ty>=0.0.34",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nimbus"]
