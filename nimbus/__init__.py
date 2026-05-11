@@ -9,7 +9,7 @@ Minimal usage:
     dmap = hv.DynamicMap(make_curve, streams=[pipe])
     pipe.send(new_data)
 
-Global defaults:
+Seed defaults before constructing pipes:
 
     import nimbus
     nimbus.defaults.duration_ms = 600

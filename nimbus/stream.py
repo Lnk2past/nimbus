@@ -8,7 +8,7 @@ Minimal usage — zero config required:
 
     pipe = TransitionPipe(data={"x": x, "y": y})
     dmap = hv.DynamicMap(make_curve, streams=[pipe])
-    pipe.send(new_data)   # animated with global defaults
+    pipe.send(new_data)
 
 Override at the pipe level:
 
@@ -18,28 +18,24 @@ Override per send:
 
     pipe.send(new_data, duration_ms=200, easing="bounce_out")
 
-Change global defaults:
+Seed global defaults before constructing pipes:
 
     import nimbus
     nimbus.defaults.duration_ms = 600
     nimbus.defaults.easing = "elastic_out"
 
-Priority: send() kwargs  >  pipe params  >  nimbus.defaults
+Priority: send() kwargs  >  pipe params
 """
 
 import time
 from typing import Any
 
-import numpy as np
 import panel as pn
-import param
 import holoviews as hv
 
 from nimbus.interpolate import interpolate, snapshot, Interpolator
 from nimbus.transition import EasingArg, resolve_easing, _AnimConfig
 from nimbus.defaults import defaults as _defaults
-
-_UNSET = object()   # sentinel for "user did not provide this param"
 
 
 class TransitionPipe(hv.streams.Pipe):
@@ -51,77 +47,44 @@ class TransitionPipe(hv.streams.Pipe):
     data : dict
         Initial data, same as hv.streams.Pipe.
     duration_ms : int, optional
-        Transition duration in ms. Falls back to nimbus.defaults.
+        Transition duration in ms. Defaults to nimbus.defaults.duration_ms at construction.
     easing : str or CubicSplineEasing or callable, optional
         Easing function. String names resolve to PRESETS.
-        Falls back to nimbus.defaults.
+        Defaults to nimbus.defaults.easing at construction.
     fps : int, optional
-        Frames per second. Falls back to nimbus.defaults.
+        Frames per second. Defaults to nimbus.defaults.fps at construction.
     on_interrupt : str, optional
         'from_current' | 'queue' | 'drop'.
-        Falls back to nimbus.defaults.
+        Defaults to nimbus.defaults.on_interrupt at construction.
     column_overrides : dict[str, Interpolator], optional
         Per-column interpolator overrides applied to every transition.
     """
 
     def __init__(
         self,
-        data:             dict[str, Any] | None = None,
-        duration_ms:      int | None = None,
-        easing:           EasingArg | None = None,
-        fps:              int | None = None,
-        on_interrupt:     str | None = None,
+        data: dict[str, Any] | None = None,
+        duration_ms: int | None = None,
+        easing: EasingArg | None = None,
+        fps: int | None = None,
+        on_interrupt: str | None = None,
         column_overrides: dict[str, Interpolator] | None = None,
         **params,
     ):
         super().__init__(data=data, **params)
 
-        # None means "inherit from defaults at send() time"
-        self._duration_ms  = duration_ms
-        self._easing       = easing
-        self._fps          = fps
-        self._on_interrupt = on_interrupt
+        self.duration_ms = (
+            duration_ms if duration_ms is not None else _defaults.duration_ms
+        )
+        self.easing = easing if easing is not None else _defaults.easing
+        self.fps = fps if fps is not None else _defaults.fps
+        self.on_interrupt = (
+            on_interrupt if on_interrupt is not None else _defaults.on_interrupt
+        )
         self.column_overrides = column_overrides or {}
 
         self._current: dict[str, Any] = snapshot(data) if data else {}
-        self._cb      = None   # active PeriodicCallback
-        self._queued  = None   # (end_data, _AnimConfig) waiting to run
-
-    # ------------------------------------------------------------------
-    # Param-style properties — read/write, fall back to defaults
-    # ------------------------------------------------------------------
-
-    @property
-    def duration_ms(self) -> int:
-        return self._duration_ms if self._duration_ms is not None else _defaults.duration_ms
-
-    @duration_ms.setter
-    def duration_ms(self, v: int) -> None:
-        self._duration_ms = v
-
-    @property
-    def easing(self) -> EasingArg:
-        return self._easing if self._easing is not None else _defaults.easing
-
-    @easing.setter
-    def easing(self, v: EasingArg) -> None:
-        self._easing = v
-
-    @property
-    def fps(self) -> int:
-        return self._fps if self._fps is not None else _defaults.fps
-
-    @fps.setter
-    def fps(self, v: int) -> None:
-        self._fps = v
-
-    @property
-    def on_interrupt(self) -> str:
-        return self._on_interrupt if self._on_interrupt is not None else _defaults.on_interrupt
-
-    @on_interrupt.setter
-    def on_interrupt(self, v: str) -> None:
-        self._on_interrupt = v
+        self._cb = None  # active PeriodicCallback
+        self._queued = None  # (end_data, _AnimConfig) waiting to run
 
     # ------------------------------------------------------------------
     # Public API
@@ -129,26 +92,16 @@ class TransitionPipe(hv.streams.Pipe):
 
     def send(
         self,
-        data:         dict[str, Any],
-        duration_ms:  int | None = None,
-        easing:       EasingArg | None = None,
-        fps:          int | None = None,
+        data: dict[str, Any],
+        duration_ms: int | None = None,
+        easing: EasingArg | None = None,
+        fps: int | None = None,
         on_interrupt: str | None = None,
     ) -> None:
         """
         Animate to new data.
 
-        Any kwargs provided here override pipe-level params for this
-        send only. Omitted kwargs fall through to pipe params, then
-        to nimbus.defaults.
-
-        Parameters
-        ----------
-        data         : target data state
-        duration_ms  : one-off duration override
-        easing       : one-off easing override (string or callable)
-        fps          : one-off fps override
-        on_interrupt : one-off interrupt mode override
+        Any kwargs provided here override pipe-level params for this send only.
         """
         cfg = self._resolve_config(duration_ms, easing, fps, on_interrupt)
 
@@ -170,21 +123,24 @@ class TransitionPipe(hv.streams.Pipe):
         return self._cb is not None
 
     # ------------------------------------------------------------------
-    # Config resolution  (send kwargs > pipe props > global defaults)
+    # Config resolution  (send kwargs > pipe params)
     # ------------------------------------------------------------------
 
     def _resolve_config(
         self,
-        duration_ms:  int | None,
-        easing:       EasingArg | None,
-        fps:          int | None,
+        duration_ms: int | None,
+        easing: EasingArg | None,
+        fps: int | None,
         on_interrupt: str | None,
     ) -> _AnimConfig:
+        fps = fps if fps is not None else self.fps
         return _AnimConfig(
-            duration_ms  = duration_ms  if duration_ms  is not None else self.duration_ms,
-            easing       = resolve_easing(easing if easing is not None else self.easing),
-            fps          = fps          if fps          is not None else self.fps,
-            on_interrupt = on_interrupt if on_interrupt is not None else self.on_interrupt,
+            duration_ms=duration_ms if duration_ms is not None else self.duration_ms,
+            easing=resolve_easing(easing if easing is not None else self.easing),
+            frame_interval_ms=max(1, 1000 // fps),
+            on_interrupt=on_interrupt
+            if on_interrupt is not None
+            else self.on_interrupt,
         )
 
     # ------------------------------------------------------------------
@@ -194,13 +150,13 @@ class TransitionPipe(hv.streams.Pipe):
     def _start_animation(
         self,
         start: dict[str, Any],
-        end:   dict[str, Any],
-        cfg:   _AnimConfig,
+        end: dict[str, Any],
+        cfg: _AnimConfig,
     ) -> None:
         self._anim_start = start
-        self._anim_end   = end
-        self._anim_cfg   = cfg
-        self._anim_t0    = time.monotonic()
+        self._anim_end = end
+        self._anim_cfg = cfg
+        self._anim_t0 = time.monotonic()
 
         self._cb = pn.state.add_periodic_callback(
             self._tick,
@@ -209,14 +165,14 @@ class TransitionPipe(hv.streams.Pipe):
 
     def _tick(self) -> None:
         elapsed_ms = (time.monotonic() - self._anim_t0) * 1000.0
-        raw_t      = min(elapsed_ms / self._anim_cfg.duration_ms, 1.0)
-        progress   = self._anim_cfg.easing(raw_t)
+        raw_t = min(elapsed_ms / self._anim_cfg.duration_ms, 1.0)
+        progress = self._anim_cfg.easing(raw_t)
 
         frame = interpolate(
             self._anim_start,
             self._anim_end,
             progress,
-            self.column_overrides or None,
+            self.column_overrides,
         )
         self._current = frame
         super().send(frame)
@@ -224,7 +180,7 @@ class TransitionPipe(hv.streams.Pipe):
         if raw_t >= 1.0:
             self._stop_animation()
             if self._queued is not None:
-                end, cfg     = self._queued
+                end, cfg = self._queued
                 self._queued = None
                 self._start_animation(snapshot(self._current), end, cfg)
 
@@ -238,8 +194,11 @@ class TransitionPipe(hv.streams.Pipe):
 
     def _handle_interrupt(self, new_end: dict[str, Any], cfg: _AnimConfig) -> None:
         mode = cfg.on_interrupt
-        if mode in ("from_current", "drop"):
-            self._stop_animation()
-            self._start_animation(snapshot(self._current), snapshot(new_end), cfg)
-        elif mode == "queue":
+        if mode == "drop":
+            return  # discard the incoming animation; let the current one finish
+        if mode == "queue":
             self._queued = (snapshot(new_end), cfg)
+            return
+        # "from_current": restart from wherever the current animation left off
+        self._stop_animation()
+        self._start_animation(snapshot(self._current), snapshot(new_end), cfg)
