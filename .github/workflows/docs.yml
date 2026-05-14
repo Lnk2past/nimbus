@@ -31,7 +31,7 @@ jobs:
       - name: Convert demo to Pyodide
         run: |
           uv run panel convert examples/app.py \
-            --to pyodide-worker \
+            --to pyodide \
             --out docs/pyodide/ \
             --requirements $(ls dist/nimbus-*.whl | head -1) holoviews param
 

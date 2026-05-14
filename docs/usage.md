@@ -108,7 +108,7 @@ uv run panel serve examples/app.py --show
 # Static Pyodide build (no server required at runtime)
 uv build
 uv run panel convert examples/app.py \
-  --to pyodide-worker \
+  --to pyodide \
   --out ./dist-web/ \
   --requirements dist/nimbus-0.1.0-py3-none-any.whl holoviews param
 python -m http.server 8765 --directory dist-web/
