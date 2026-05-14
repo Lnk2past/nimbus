@@ -6,6 +6,8 @@ build-backend = "hatchling.build"
 name = "nimbus"
 version = "0.1.0"
 description = "Smooth animated data transitions for HoloViews / Panel"
+readme = "README.md"
+license = {file = "UNLICENSE"}
 requires-python = ">=3.12"
 dependencies = [
     "bokeh>=3.9.0",
@@ -14,6 +16,9 @@ dependencies = [
     "panel>=1.8.10",
     "param>=2.3.3",
 ]
+
+[project.urls]
+Source = "https://github.com/lnk2past/nimbus"
 
 [dependency-groups]
 tools = [
