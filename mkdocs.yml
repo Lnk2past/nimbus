@@ -1,0 +1,49 @@
+site_name: nimbus
+site_description: Smooth animated data transitions for HoloViews / Panel
+site_url: https://lnk2past.github.io/nimbus
+repo_url: https://github.com/lnk2past/nimbus
+repo_name: lnk2past/nimbus
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.top
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - API Reference:
+    - TransitionPipe: api/pipe.md
+    - Easing: api/easing.md
+    - Defaults: api/defaults.md
+    - Interpolation: api/interpolate.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences

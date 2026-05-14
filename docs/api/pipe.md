@@ -1,0 +1,3 @@
+# TransitionPipe
+
+::: nimbus.stream.TransitionPipe
