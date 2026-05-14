@@ -85,13 +85,16 @@ class CurveEditor(param.Parameterized):
 
     @property
     def panel(self) -> pn.viewable.Viewable:
+        """The Panel layout for embedding in a dashboard."""
         return self._panel
 
     @property
     def spline(self) -> CubicSplineEasing:
+        """The current spline easing function."""
         return self._spline
 
     def set_preset(self, name: str) -> None:
+        """Replace the current spline with a named preset and sync the point stream."""
         if name not in PRESETS:
             raise KeyError(f"Unknown preset {name!r}. Options: {list(PRESETS)}")
         self._spline = PRESETS[name]
@@ -102,6 +105,7 @@ class CurveEditor(param.Parameterized):
     # ------------------------------------------------------------------
 
     def _interior_data(self) -> dict:
+        """Current interior (non-anchor) control points as a PointDraw-compatible dict."""
         pts = self._spline.points
         interior = [p for p in pts if p[0] not in (0.0, 1.0)]
         return {"x": [p[0] for p in interior], "y": [p[1] for p in interior]}
@@ -111,6 +115,7 @@ class CurveEditor(param.Parameterized):
     # ------------------------------------------------------------------
 
     def _push_to_pipe(self, *_) -> None:
+        """Write current editor state to the linked pipe (if any)."""
         if self._pipe is None:
             return
         self._pipe.easing       = self._spline
@@ -123,6 +128,7 @@ class CurveEditor(param.Parameterized):
     # ------------------------------------------------------------------
 
     def _on_points_changed(self, **kwargs) -> None:
+        """Rebuild the spline from PointDraw data when control points change."""
         data = self._point_stream.data
         xs   = list(data.get("x", []))
         ys   = list(data.get("y", []))
@@ -131,12 +137,14 @@ class CurveEditor(param.Parameterized):
         self._push_to_pipe()
 
     def _make_curve(self, data=None) -> hv.Curve:
+        """DynamicMap callback: return the sampled spline as a Curve."""
         ts, ys = self._spline.sample(_N_SAMPLES)
         return hv.Curve({"x": ts.tolist(), "y": ys.tolist()}).opts(
             color=_COL_CURVE, line_width=2.5
         )
 
     def _make_scrubber(self, data=None, preview_t=0.5) -> hv.Overlay:
+        """DynamicMap callback: return the scrubber crosshair and dot at preview_t."""
         v = float(self._spline(preview_t))
         crosshair = hv.Segments(
             [(0.0, v, preview_t, v), (preview_t, 0.0, preview_t, v)]
@@ -151,6 +159,7 @@ class CurveEditor(param.Parameterized):
     # ------------------------------------------------------------------
 
     def _build_plot(self) -> hv.Overlay:
+        """Build the HoloViews overlay containing the interactive curve editor."""
         overshoot_bg  = hv.HSpan(1.0, 1.35).opts(color="#f0f8ff", alpha=0.4, line_color=None)
         undershoot_bg = hv.HSpan(-0.35, 0.0).opts(color="#fff0f0", alpha=0.4, line_color=None)
         diagonal = hv.Curve([(0, 0), (1, 1)]).opts(
@@ -191,6 +200,7 @@ class CurveEditor(param.Parameterized):
     # ------------------------------------------------------------------
 
     def _build_panel(self) -> pn.viewable.Viewable:
+        """Build the full Panel layout with the plot, preset buttons, and sliders."""
         buttons: list[pn.widgets.Button] = [
             pn.widgets.Button(name=name, button_type="light", width=100, height=26)
             for name in PRESETS

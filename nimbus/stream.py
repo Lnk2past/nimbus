@@ -133,6 +133,7 @@ class TransitionPipe(hv.streams.Pipe):
         fps: int | None,
         on_interrupt: str | None,
     ) -> _AnimConfig:
+        """Merge per-send overrides with pipe-level params into an _AnimConfig."""
         fps = fps if fps is not None else self.fps
         return _AnimConfig(
             duration_ms=duration_ms if duration_ms is not None else self.duration_ms,
@@ -153,6 +154,7 @@ class TransitionPipe(hv.streams.Pipe):
         end: dict[str, Any],
         cfg: _AnimConfig,
     ) -> None:
+        """Start the periodic animation loop from start to end data."""
         self._anim_start = start
         self._anim_end = end
         self._anim_cfg = cfg
@@ -164,6 +166,7 @@ class TransitionPipe(hv.streams.Pipe):
         )
 
     def _tick(self) -> None:
+        """Advance the animation by one frame; stops and chains any queued animation when done."""
         elapsed_ms = (time.monotonic() - self._anim_t0) * 1000.0
         raw_t = min(elapsed_ms / self._anim_cfg.duration_ms, 1.0)
         progress = self._anim_cfg.easing(raw_t)
@@ -185,6 +188,7 @@ class TransitionPipe(hv.streams.Pipe):
                 self._start_animation(snapshot(self._current), end, cfg)
 
     def _stop_animation(self) -> None:
+        """Cancel the active periodic callback."""
         if self._cb is not None:
             try:
                 self._cb.stop()
@@ -193,6 +197,7 @@ class TransitionPipe(hv.streams.Pipe):
             self._cb = None
 
     def _handle_interrupt(self, new_end: dict[str, Any], cfg: _AnimConfig) -> None:
+        """Apply the on_interrupt policy when send() arrives during an active animation."""
         mode = cfg.on_interrupt
         if mode == "drop":
             return  # discard the incoming animation; let the current one finish

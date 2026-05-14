@@ -33,6 +33,7 @@ class CubicSplineEasing:
     """
 
     def __init__(self, points: list[tuple[float, float]]):
+        """Build from control points; deduplicates on x, enforces (0, 0) and (1, 1) anchors."""
         seen = {x: y for x, y in points if 0.0 < x < 1.0}
         all_pts = [(0.0, 0.0), *sorted(seen.items()), (1.0, 1.0)]
 
@@ -42,9 +43,11 @@ class CubicSplineEasing:
 
     @property
     def points(self) -> list[tuple[float, float]]:
+        """All control points including anchors, sorted by x."""
         return list(zip(self._xs.tolist(), self._ys.tolist()))
 
     def __call__(self, t: float) -> float:
+        """Evaluate the spline at normalised time t ∈ [0, 1]."""
         t = float(np.clip(t, 0.0, 1.0))
         idx = int(
             np.clip(
@@ -56,13 +59,16 @@ class CubicSplineEasing:
         return float(a + b * h + c * h**2 + d * h**3)
 
     def sample(self, n: int = 256) -> tuple[np.ndarray, np.ndarray]:
+        """Sample the spline at n evenly-spaced times; returns (ts, ys)."""
         ts = np.linspace(0.0, 1.0, n)
         return ts, np.vectorize(self)(ts)
 
     def with_point_added(self, x: float, y: float) -> CubicSplineEasing:
+        """Return a new spline with an extra interior control point at (x, y)."""
         return CubicSplineEasing(self.points + [(x, y)])
 
     def with_point_moved(self, index: int, x: float, y: float) -> CubicSplineEasing:
+        """Return a new spline with interior point at index moved to (x, y)."""
         pts = self.points
         if index in (0, len(pts) - 1):
             raise ValueError("Cannot move anchor points.")
@@ -70,6 +76,7 @@ class CubicSplineEasing:
         return CubicSplineEasing(pts)
 
     def with_point_removed(self, index: int) -> CubicSplineEasing:
+        """Return a new spline with the interior point at index removed."""
         pts = self.points
         if index in (0, len(pts) - 1):
             raise ValueError("Cannot remove anchor points.")
@@ -81,6 +88,7 @@ class CubicSplineEasing:
 
 
 def _natural_cubic_coeffs(xs: np.ndarray, ys: np.ndarray) -> np.ndarray:
+    """Compute (n-1, 4) polynomial coefficients for a natural cubic spline via the Thomas algorithm."""
     n = len(xs)
     h = np.diff(xs)
 

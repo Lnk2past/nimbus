@@ -14,6 +14,8 @@ import param
 
 
 class _Defaults(param.Parameterized):
+    """Container for module-level defaults copied into each TransitionPipe at construction."""
+
     duration_ms = param.Integer(
         default=300, bounds=(1, None), doc="Transition duration in ms."
     )
@@ -28,6 +30,7 @@ class _Defaults(param.Parameterized):
     )
 
     def __repr__(self) -> str:
+        """Return a concise human-readable summary of the current defaults."""
         return (
             f"nimbus defaults("
             f"duration_ms={self.duration_ms}, "
