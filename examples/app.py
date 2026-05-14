@@ -22,6 +22,7 @@ pn.extension()
 
 nimbus.defaults.duration_ms = 400
 nimbus.defaults.easing      = "ease_in_out"
+nimbus.defaults.fps         = 30
 
 # ---------------------------------------------------------------------------
 # Data generators
