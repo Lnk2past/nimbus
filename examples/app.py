@@ -12,7 +12,6 @@ import panel as pn
 
 import nimbus
 from nimbus import TransitionPipe
-from nimbus.widgets import CurveEditor
 
 hv.extension("bokeh")
 pn.extension()
@@ -62,12 +61,6 @@ dmap = hv.DynamicMap(
 )
 
 # ---------------------------------------------------------------------------
-# Curve editor — linked directly to the pipe
-# ---------------------------------------------------------------------------
-
-editor = CurveEditor(pipe)
-
-# ---------------------------------------------------------------------------
 # Controls
 # ---------------------------------------------------------------------------
 
@@ -76,12 +69,10 @@ shape_selector = pn.widgets.RadioButtonGroup(
     button_type="primary", width=300,
 )
 send_btn = pn.widgets.Button(name="▶  Animate", button_type="success", width=150)
-status   = pn.pane.Markdown("_Ready_", styles={"color": "#888", "font-size": "12px"})
 
 def on_send(event):
     data = SHAPES[shape_selector.value]()
     pipe.send(data)
-    status.object = f"_Animating → **{shape_selector.value}** ({pipe.duration_ms} ms)_"
 
 send_btn.param.watch(on_send, "clicks")
 
@@ -89,25 +80,11 @@ send_btn.param.watch(on_send, "clicks")
 # Layout
 # ---------------------------------------------------------------------------
 
-sidebar = pn.Column(
-    pn.pane.Markdown("## nimbus"),
-    pn.pane.Markdown("Smooth animated transitions for HoloViews.",
-                     styles={"color": "#666", "font-size": "13px"}),
-    pn.layout.Divider(),
+pn.Column(
     pn.pane.Markdown("**Target shape**"),
-    shape_selector,
+    pn.Row(shape_selector, send_btn),
     pn.Spacer(height=8),
-    send_btn,
-    status,
     pn.layout.Divider(),
-    editor.panel,
-    width=420, margin=(10, 20),
-)
-
-main = pn.Column(
-    pn.pane.Markdown("### Live plot"),
     pn.panel(dmap),
-    margin=(10, 20),
-)
-
-pn.Row(sidebar, main).servable()
+    width=420, margin=(10, 20),
+).servable()

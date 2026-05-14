@@ -34,6 +34,7 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Usage: usage.md
+  - Demo: demo.md
   - API Reference:
     - TransitionPipe: api/pipe.md
     - Easing: api/easing.md

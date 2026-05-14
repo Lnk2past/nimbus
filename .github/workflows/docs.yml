@@ -25,6 +25,16 @@ jobs:
       - name: Install docs dependencies
         run: uv sync --group docs
 
+      - name: Build wheel
+        run: uv build
+
+      - name: Convert demo to Pyodide
+        run: |
+          uv run panel convert examples/app.py \
+            --to pyodide-worker \
+            --out docs/pyodide/ \
+            --requirements $(ls dist/nimbus-*.whl | head -1) holoviews param
+
       - name: Build docs
         run: uv run mkdocs build --strict
 
