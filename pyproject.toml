@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 dependencies = [
     "bokeh>=3.9.0",
     "holoviews>=1.22.1",
-    "numpy>=2.4.4",
+    "numpy>=2.0",
     "panel>=1.8.10",
     "param>=2.3.3",
 ]

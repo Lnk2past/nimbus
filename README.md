@@ -14,6 +14,13 @@ pip install git+https://github.com/lnk2past/nimbus.git
 uv add git+https://github.com/lnk2past/nimbus.git
 ```
 
+## Requirements
+
+nimbus requires an active event loop and is not compatible with static HTML exports. Two deployment modes are supported:
+
+- **`panel serve`** — standard live server deployment.
+- **`panel convert` (Pyodide/WASM)** — runs fully in the browser with no server required. Panel routes `add_periodic_callback` through the browser's asyncio loop automatically.
+
 ## Overview
 
 nimbus provides `TransitionPipe`, a replacement for `hv.streams.Pipe` that interpolates between data states over a configurable duration using an easing function. Each call to `pipe.send(new_data)` triggers an animated transition rather than an instant jump.

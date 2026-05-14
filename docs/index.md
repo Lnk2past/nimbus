@@ -2,6 +2,9 @@
 
 Smooth animated data transitions for HoloViews / Panel. Drop `TransitionPipe` in place of `hv.streams.Pipe` and your plots animate between states automatically.
 
+!!! info "Deployment modes"
+    nimbus works with `panel serve` (live server) and `panel convert` (Pyodide/WASM — runs fully in the browser, no server required). Static HTML exports are not supported.
+
 ## Quick start
 
 ```python

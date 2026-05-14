@@ -585,7 +585,7 @@ tools = [
 requires-dist = [
     { name = "bokeh", specifier = ">=3.9.0" },
     { name = "holoviews", specifier = ">=1.22.1" },
-    { name = "numpy", specifier = ">=2.4.4" },
+    { name = "numpy", specifier = ">=2.0" },
     { name = "panel", specifier = ">=1.8.10" },
     { name = "param", specifier = ">=2.3.3" },
 ]
