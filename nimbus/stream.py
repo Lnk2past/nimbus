@@ -24,7 +24,7 @@ Seed global defaults before constructing pipes:
     nimbus.defaults.duration_ms = 600
     nimbus.defaults.easing = "elastic_out"
 
-Priority: send() kwargs  >  pipe params
+Priority: send() kwargs  >  pipe params  >  nimbus.defaults
 """
 
 import time
@@ -102,7 +102,18 @@ class TransitionPipe(hv.streams.Pipe):
         """
         Animate to new data.
 
-        Any kwargs provided here override pipe-level params for this send only.
+        Parameters
+        ----------
+        data : dict
+            Target data to animate to.
+        duration_ms : int, optional
+            Override transition duration for this call only.
+        easing : str or callable, optional
+            Override easing for this call only.
+        fps : int, optional
+            Override frames per second for this call only.
+        on_interrupt : str, optional
+            Override interrupt policy for this call only.
         """
         cfg = self._resolve_config(duration_ms, easing, fps, on_interrupt)
 

@@ -1,5 +1,5 @@
 """
-nimbus (nimbus) — smooth animated data transitions for HoloViews / Panel.
+nimbus — smooth animated data transitions for HoloViews / Panel.
 
 Minimal usage:
 

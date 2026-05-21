@@ -10,3 +10,6 @@ nimbus.defaults.easing = "elastic_out"
 ```
 
 ::: nimbus.defaults._Defaults
+    options:
+      show_root_heading: false
+      heading_level: 2

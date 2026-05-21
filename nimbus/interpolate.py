@@ -11,6 +11,7 @@ import numpy as np
 
 
 Interpolator = Callable[[Any, Any, float], Any]
+"""Callable signature for a per-column interpolator: ``(start, end, progress) -> value``."""
 
 
 def interpolate(
@@ -25,9 +26,22 @@ def interpolate(
 
     Parameters
     ----------
-    start, end : data dicts (same structure as hv.streams.Pipe data)
-    progress   : easing output — 0 = start, 1 = end, may overshoot
-    overrides  : per-key interpolator overrides
+    start : dict
+        Start data dict.
+    end : dict
+        End data dict.
+    progress : float
+        Easing output; 0 = start, 1 = end. May exceed [0, 1] when the easing overshoots.
+    overrides : dict[str, Interpolator], optional
+        Per-column interpolator overrides. Columns not listed use linear interpolation.
+    out : dict[str, np.ndarray], optional
+        Pre-allocated output buffer. Matching numeric arrays are written in-place
+        to avoid per-tick allocation. Buffer shapes must match the end arrays.
+
+    Returns
+    -------
+    dict
+        Interpolated data dict. Values for buffered keys are views into ``out``.
     """
     overrides = overrides or {}
     result: dict[str, Any] = {}

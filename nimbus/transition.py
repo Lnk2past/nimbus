@@ -18,7 +18,10 @@ import numpy as np
 
 
 EasingFn = Callable[[float], float]
+"""A callable that maps normalised time ``t ∈ [0, 1]`` to a progress value."""
+
 EasingArg = str | EasingFn
+"""Accepted easing argument: a preset name string or an :data:`EasingFn` callable."""
 
 
 class CubicSplineEasing:
@@ -33,7 +36,14 @@ class CubicSplineEasing:
     """
 
     def __init__(self, points: list[tuple[float, float]]):
-        """Build from control points; deduplicates on x, enforces (0, 0) and (1, 1) anchors."""
+        """
+        Parameters
+        ----------
+        points : list of (float, float)
+            Control points as ``(time, value)`` pairs. The anchor points ``(0, 0)``
+            and ``(1, 1)`` are always enforced. Interior points with duplicate
+            x-values are deduplicated (last value wins).
+        """
         seen = {x: y for x, y in points if 0.0 < x < 1.0}
         all_pts = [(0.0, 0.0), *sorted(seen.items()), (1.0, 1.0)]
 
@@ -68,7 +78,14 @@ class CubicSplineEasing:
         return CubicSplineEasing(self.points + [(x, y)])
 
     def with_point_moved(self, index: int, x: float, y: float) -> CubicSplineEasing:
-        """Return a new spline with interior point at index moved to (x, y)."""
+        """
+        Return a new spline with interior point at ``index`` moved to ``(x, y)``.
+
+        Raises
+        ------
+        ValueError
+            If ``index`` refers to an anchor point (first or last).
+        """
         pts = self.points
         if index in (0, len(pts) - 1):
             raise ValueError("Cannot move anchor points.")
@@ -76,7 +93,14 @@ class CubicSplineEasing:
         return CubicSplineEasing(pts)
 
     def with_point_removed(self, index: int) -> CubicSplineEasing:
-        """Return a new spline with the interior point at index removed."""
+        """
+        Return a new spline with the interior point at ``index`` removed.
+
+        Raises
+        ------
+        ValueError
+            If ``index`` refers to an anchor point (first or last).
+        """
         pts = self.points
         if index in (0, len(pts) - 1):
             raise ValueError("Cannot remove anchor points.")
@@ -156,7 +180,26 @@ Easing = types.SimpleNamespace(**PRESETS)
 
 
 def resolve_easing(easing: EasingArg) -> EasingFn:
-    """Resolve a string preset name or callable to an EasingFn."""
+    """
+    Resolve a preset name or callable to an :data:`EasingFn`.
+
+    Parameters
+    ----------
+    easing : str or callable
+        A preset name (see :data:`PRESETS`) or any callable ``(float) -> float``.
+
+    Returns
+    -------
+    EasingFn
+        The resolved easing function.
+
+    Raises
+    ------
+    ValueError
+        If ``easing`` is a string not found in :data:`PRESETS`.
+    TypeError
+        If ``easing`` is neither a string nor callable.
+    """
     if isinstance(easing, str):
         if easing not in PRESETS:
             raise ValueError(
