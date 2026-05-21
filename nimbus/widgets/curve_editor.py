@@ -35,16 +35,27 @@ _COL_BG     = "#fafafa"
 
 class CurveEditor(param.Parameterized):
     """
-    Interactive easing curve editor.
+    Interactive easing curve editor backed by a draggable cubic spline.
 
-    Parameters
+    Linked to a pipe — editor changes apply immediately:
+
+        editor = CurveEditor(pipe)
+
+    Standalone — read the current state manually:
+
+        editor = CurveEditor()
+        pipe.send(data, easing=editor.spline, duration_ms=editor.duration_ms)
+
+    Attributes
     ----------
-    pipe : TransitionPipe, optional
-        If provided, the editor writes its settings directly to the pipe
-        whenever the curve or sliders change.
-    duration_ms : int, optional
-    fps : int, optional
-    on_interrupt : str, optional
+    duration_ms : int
+        Transition duration in ms (50–5000).
+    fps : int
+        Frames per second (10–120).
+    on_interrupt : str
+        Interrupt policy: ``"from_current"``, ``"queue"``, or ``"drop"``.
+    preview_t : float
+        Scrubber position for previewing the easing value (0–1).
     """
 
     duration_ms  = param.Integer(default=300, bounds=(50, 5000), step=50)
@@ -55,6 +66,15 @@ class CurveEditor(param.Parameterized):
     preview_t = param.Number(default=0.5, bounds=(0.0, 1.0), step=0.01)
 
     def __init__(self, pipe=None, **params):
+        """
+        Parameters
+        ----------
+        pipe : TransitionPipe, optional
+            If provided, editor changes are written to the pipe immediately.
+        **params
+            Initial values for ``duration_ms``, ``fps``, and ``on_interrupt``.
+            Defaults are read from the pipe (or ``nimbus.defaults``) if omitted.
+        """
         source = pipe if pipe is not None else _defaults
         params.setdefault("duration_ms", source.duration_ms)
         params.setdefault("fps", source.fps)
@@ -94,7 +114,14 @@ class CurveEditor(param.Parameterized):
         return self._spline
 
     def set_preset(self, name: str) -> None:
-        """Replace the current spline with a named preset and sync the point stream."""
+        """
+        Replace the current spline with a named preset.
+
+        Parameters
+        ----------
+        name : str
+            One of the keys in ``nimbus.PRESETS``.
+        """
         if name not in PRESETS:
             raise KeyError(f"Unknown preset {name!r}. Options: {list(PRESETS)}")
         self._spline = PRESETS[name]
