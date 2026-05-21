@@ -30,6 +30,7 @@ Priority: send() kwargs  >  pipe params
 import time
 from typing import Any
 
+import numpy as np
 import panel as pn
 import holoviews as hv
 
@@ -159,6 +160,11 @@ class TransitionPipe(hv.streams.Pipe):
         self._anim_end = end
         self._anim_cfg = cfg
         self._anim_t0 = time.monotonic()
+        self._frame_buffer = {
+            k: np.empty_like(v, dtype=float)
+            for k, v in end.items()
+            if np.issubdtype(np.asarray(v).dtype, np.number)
+        }
 
         self._cb = pn.state.add_periodic_callback(
             self._tick,
@@ -176,6 +182,7 @@ class TransitionPipe(hv.streams.Pipe):
             self._anim_end,
             progress,
             self.column_overrides,
+            out=self._frame_buffer,
         )
         self._current = frame
         super().send(frame)

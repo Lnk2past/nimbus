@@ -22,21 +22,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - name: Install docs dependencies
-        run: uv sync --group docs
-
-      - name: Build wheel
-        run: uv build
-
-      - name: Convert demo to Pyodide
-        run: |
-          uv run panel convert examples/app.py \
-            --to pyodide \
-            --out docs/pyodide/ \
-            --requirements $(ls dist/nimbus-*.whl | head -1) holoviews param
-
       - name: Build docs
-        run: uv run mkdocs build --strict
+        run: bash scripts/make_docs.sh --build
 
       - uses: actions/upload-pages-artifact@v3
         with:

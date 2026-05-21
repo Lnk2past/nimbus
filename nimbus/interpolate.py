@@ -18,6 +18,7 @@ def interpolate(
     end: dict[str, Any],
     progress: float,
     overrides: dict[str, Interpolator] | None = None,
+    out: dict[str, np.ndarray] | None = None,
 ) -> dict[str, Any]:
     """
     Interpolate between two data dicts at the given progress value.
@@ -53,8 +54,16 @@ def interpolate(
         if key in overrides:
             result[key] = overrides[key](s, e, progress)
         elif np.issubdtype(s_arr.dtype, np.number):
-            s_f, e_f = s_arr.astype(float), e_arr.astype(float)
-            result[key] = s_f + (e_f - s_f) * progress
+            s_f = s_arr if np.issubdtype(s_arr.dtype, np.floating) else s_arr.astype(float)
+            e_f = e_arr if np.issubdtype(e_arr.dtype, np.floating) else e_arr.astype(float)
+            buf = None if out is None else out.get(key)
+            if buf is not None and buf.shape == s_f.shape:
+                np.subtract(e_f, s_f, out=buf)
+                buf *= progress
+                buf += s_f
+                result[key] = buf
+            else:
+                result[key] = s_f + (e_f - s_f) * progress
         else:
             result[key] = e if progress >= 0.5 else s
 
