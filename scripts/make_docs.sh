@@ -11,7 +11,7 @@ mkdir -p docs/demos
 
 for script in examples/*.py; do
     name=$(basename "$script" .py)
-    title=$(python3 -c "print('$name'.replace('_', ' ').title())")
+    title=$(python3 -c "print('$name'.split('_', 1)[-1].replace('_', ' ').title())")
     uv run panel convert "$script" \
         --to pyodide \
         --out "docs/pyodide/$name/" \

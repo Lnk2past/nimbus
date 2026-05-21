@@ -32,8 +32,9 @@ nav:
 - Installation: installation.md
 - Usage: usage.md
 - Demos:
-  - Simple: demos/simple.md
-  - Stress Test: demos/stress_test.md
+  - 0 Simple: demos/0_simple.md
+  - 1 Curve Editor: demos/1_curve_editor.md
+  - 2 Stress Test: demos/2_stress_test.md
 - API Reference:
   - TransitionPipe: api/pipe.md
   - Easing: api/easing.md

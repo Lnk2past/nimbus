@@ -18,7 +18,7 @@ from nimbus import TransitionPipe
 hv.extension("bokeh")
 pn.extension()
 
-nimbus.defaults.duration_ms = 600
+nimbus.defaults.duration_ms = 400
 nimbus.defaults.easing      = "ease_in_out"
 nimbus.defaults.fps         = 30
 
@@ -57,7 +57,7 @@ def make_dmap(pipe, color):
         lambda data: hv.Curve(data, kdims=["x"], vdims=["y"]).opts(
             width=300, height=200,
             line_width=1.5, color=color,
-            ylim=(-1.6, 1.6), toolbar=None,
+            ylim=(-1.6, 1.6), toolbar=None, tools=[], default_tools=[],
         ),
         streams=[pipe],
     )

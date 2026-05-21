@@ -1,9 +1,8 @@
 """
-app.py — Nimbus demo dashboard.
+curve_editor.py — Nimbus demo with interactive easing curve editor.
 
 Run with:
-    uv run panel serve app.py --show
-    uv run panel serve app.py --allow-websocket-origin=*
+    uv run panel serve examples/curve_editor.py --show
 """
 
 import numpy as np
@@ -12,13 +11,10 @@ import panel as pn
 
 import nimbus
 from nimbus import TransitionPipe
+from nimbus.widgets import CurveEditor
 
 hv.extension("bokeh")
 pn.extension()
-
-# ---------------------------------------------------------------------------
-# Optional: set global defaults once, affects all TransitionPipes
-# ---------------------------------------------------------------------------
 
 nimbus.defaults.duration_ms = 400
 nimbus.defaults.easing      = "ease_in_out"
@@ -44,10 +40,10 @@ def noise() -> dict:
     x = np.linspace(0, 2 * np.pi, 300)
     return {"x": x, "y": np.random.uniform(-1, 1, 300)}
 
-SHAPES = {"Sine": sine_wave, "Square": square_wave, "Sawtooth": sawtooth, "Noise": noise}
+SHAPES = [sine_wave, square_wave, sawtooth, noise]
 
 # ---------------------------------------------------------------------------
-# TransitionPipe + DynamicMap  — the whole integration in 4 lines
+# TransitionPipe + DynamicMap
 # ---------------------------------------------------------------------------
 
 pipe = TransitionPipe(data=sine_wave())
@@ -56,7 +52,7 @@ dmap = hv.DynamicMap(
     lambda data: hv.Curve(data, kdims=["x"], vdims=["y"]).opts(
         width=620, height=360,
         line_width=2.5, color="#1f77b4",
-        ylim=(-1.6, 1.6), toolbar=None,
+        ylim=(-1.6, 1.6), toolbar=None, tools=[], default_tools=[],
     ),
     streams=[pipe],
 )
@@ -65,15 +61,17 @@ dmap = hv.DynamicMap(
 # Controls
 # ---------------------------------------------------------------------------
 
-shape_selector = pn.widgets.RadioButtonGroup(
-    options=list(SHAPES), value="Sine",
-    button_type="primary", width=300,
-)
+editor = CurveEditor(pipe)
+
 send_btn = pn.widgets.Button(name="▶  Animate", button_type="success", width=150)
 
+_current_shape = SHAPES[0]
+
 def on_send(event):
-    data = SHAPES[shape_selector.value]()
-    pipe.send(data)
+    global _current_shape
+    choices = [s for s in SHAPES if s is not _current_shape]
+    _current_shape = np.random.choice(choices)
+    pipe.send(_current_shape())
 
 send_btn.param.watch(on_send, "clicks")
 
@@ -82,10 +80,15 @@ send_btn.param.watch(on_send, "clicks")
 # ---------------------------------------------------------------------------
 
 pn.Column(
-    pn.pane.Markdown("**Target shape**"),
-    pn.Row(shape_selector, send_btn),
-    pn.Spacer(height=8),
-    pn.layout.Divider(),
-    pn.panel(dmap),
-    width=420, margin=(10, 20),
+    pn.Column(
+        send_btn,
+        pn.Spacer(height=8),
+        pn.layout.Divider(),
+        pn.panel(dmap),
+        margin=(10, 20),
+    ),
+    pn.Column(
+        editor.panel,
+        margin=(10, 20),
+    ),
 ).servable()
